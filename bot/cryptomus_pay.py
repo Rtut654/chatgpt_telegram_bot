@@ -10,11 +10,12 @@ def generate_headers(data: str) -> Dict[str, Any]:
     sign = hashlib.md5(base64.b64encode (data. encode ("ascii")) + CRYPTOMUS_API_KEY.encode("ascii")).hexdigest()
     return {"merchant": MERCHANT_UUID, "sign": sign, "content-type": "application/json"}
 
-async def create_invoice(user_id: int, amount: int, currency: str, network: str) -> Any:
+async def create_invoice(db, user_id: int, amount: int, currency: str, network: str) -> Any:
     """
        Создает счет на оплату с помощью API Cryptomus.
 
        Аргументы:
+           db: Экземпляр класса Database.
            user_id (int): Идентификатор пользователя.
            amount (int): Сумма платежа.
            currency (str): Валюта платежа (например, "USDT").
@@ -53,15 +54,28 @@ async def create_invoice(user_id: int, amount: int, currency: str, network: str)
             data=json_dumps,
             headers=generate_headers(json_dumps)
         )
+        invoice = await response.json()
 
-        return await response.json()
+        if "result" in invoice and "uuid" in invoice["result"]:
+            db.add_new_payment(
+                user_id=user_id,
+                amount=float(invoice["result"]["amount"]),
+                currency=invoice["result"]["currency"],
+                payment_type="cryptomus",
+                payment_id=invoice['result']['uuid'],
+                order_id=None,
+                status=invoice["result"].get("status", "pending"),
+                additional_data={"uuid": invoice["result"]["uuid"], "url": invoice["result"]["url"]}
+            )
+        return invoice
 
 
-async def get_invoice(uuid: str) -> Any:
+async def get_invoice(db, uuid: str) -> Any:
     """
     Получает информацию о счете по его UUID.
 
     Аргументы:
+        db: Экземпляр класса Database.
         uuid (str): Уникальный идентификатор счета.
 
     Возвращает:
@@ -86,4 +100,11 @@ async def get_invoice(uuid: str) -> Any:
             data=json_dumps,
             headers=generate_headers(json_dumps)
         )
-        return await response.json()
+        invoice = await response.json()
+
+        pay_doc = db.payment_collection.find_one({"additional_data.uuid": uuid})
+        if pay_doc and "result" in invoice:
+            new_status = invoice["result"].get("status", pay_doc["status"])
+            db.update_payment_status(pay_doc["_id"], new_status)
+
+        return invoice
