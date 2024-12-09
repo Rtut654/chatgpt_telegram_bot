@@ -1,4 +1,5 @@
 from typing import Optional, Any
+from datetime import datetime, timedelta
 
 import pymongo
 import uuid
@@ -51,7 +52,9 @@ class Database:
             "n_used_tokens": {},
 
             "n_generated_images": 0,
-            "n_transcribed_seconds": 0.0  # voice message transcription
+            "n_transcribed_seconds": 0.0,  # voice message transcription
+            "is_subscribed": False,
+            "subscription_expire_date": None
         }
 
         if not self.check_if_user_exists(user_id):
@@ -198,8 +201,26 @@ class Database:
         self.payment_collection.update_one(
             {"_id": pay_id},
             {"$set": {"status": new_status, "updated_at": datetime.now()}}
-        )
 
+        )
+    def update_user_subscription(self, user_id: int, duration_days: int = 30):
+        """
+        Активирует подписку для пользователя на указанный период.
+
+        Args:
+            user_id (int): Идентификатор пользователя.
+            duration_days (int): Кол-во дней подписки. По умолчанию 30.
+        """
+        subscription_end = datetime.now() + timedelta(days=duration_days)
+        self.user_collection.update_one(
+            {"_id": user_id},
+            {
+                "$set": {
+                    "is_subscribed": True,
+                    "subscription_expire_date": subscription_end
+                }
+            }
+        )
     # def set_payment_external_ids(self, pay_id: str, payment_id: Optional[str] = None, order_id: Optional[str] = None):
     #     """
     #     Устанавливает внешние идентификаторы платежа, если они стали известны после создания записи.
