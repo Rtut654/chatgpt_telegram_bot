@@ -39,3 +39,5 @@ help_group_chat_video_path = Path(__file__).parent.parent.resolve() / "static" /
 return_tg_url = 'YOUR TELEGRAM BOT LINK'
 secret_key = 'YOUR SECRET KEY FROM YOOKASSA'
 account_id = 'YOUR Account ID FROM YOOKASSA'
+wh_Url = "WEBHOOK URL"
+url_callback = "url_callback for crtypto,us"
