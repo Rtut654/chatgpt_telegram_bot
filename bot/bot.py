@@ -503,6 +503,8 @@ async def is_previous_message_not_answered_yet(update: Update, context: Callback
 
 async def voice_message_handle(update: Update, context: CallbackContext):
     # check if bot was mentioned (for group chats)
+    # if no subscription show no sub message
+
     if not await is_bot_mentioned(update, context):
         return
 
@@ -732,52 +734,67 @@ async def set_settings_handle(update: Update, context: CallbackContext):
         if str(e).startswith("Message is not modified"):
             pass
 
+SUBSCRIBE_OR_FREE = [[InlineKeyboardButton("🔐 Subscribe", callback_data="products")], [InlineKeyboardButton('🍉 Get messages for free', callback_data="invite_friend")]]
+
+async def consider_payment(chat_id, context):
+    products = InlineKeyboardMarkup(SUBSCRIBE_OR_FREE)
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text="Oops, seems like you've used all your daily limit, please consider subscription to get 100 meesages daily.",
+        reply_markup=products,
+        parse_mode=ParseMode.HTML
+    )
+
+def check_premium(user_id):
+    is_premium = db.get_attribute(user_id, 'is_premium')
+    if is_premium:
+        premium_till = db.get_user_attribute(user_id, 'premium_till')
+        premium_till = datetime.strptime(premium_till, '%Y-%m-%d %H:%M:%S.%f')
+        is_premium = (premium_till - datetime.now()).total_seconds() > 0
+        return is_premium
+    return False
+
+
+DAILY_QUOTA = {"free":5, "premium":100}
+
+async def get_balance_state(chat_id, is_premium, daily_messages):
+
+    if not is_premium:
+        quota = DAILY_QUOTA['free']
+    else:
+        quota = DAILY_QUOTA['premium']
+    balance_state = f"<b> Your remained daily quotа is {max(0, qouta-daily_messages)} messages.</b>"
+    return balance_state
+
+
 
 async def show_balance_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
 
     user_id = update.message.from_user.id
-    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+    # db.get_user_attribute(user_id, "premium_till")
+    # db.set_user_attribute(user_id, "last_interaction", datetime.now())
+    UNSUBSCRIBE = [[InlineKeyboardButton("🔒 Unsubscribe", callback_data="unsubscribe")]]
+    is_premium = await check_premium(user_id)
+    premium_till = db.get_user_attribute(user_id, "premium_till")
+    daily_messages = db.get_user_attribute(user_id, "daily_messages")
+    balance_state = await get_balance_state(user_id, is_premium, daily_messages)
 
-    # count total usage statistics
-    total_n_spent_dollars = 0
-    total_n_used_tokens = 0
-
-    n_used_tokens_dict = db.get_user_attribute(user_id, "n_used_tokens")
-    n_generated_images = db.get_user_attribute(user_id, "n_generated_images")
-    n_transcribed_seconds = db.get_user_attribute(user_id, "n_transcribed_seconds")
-
-    details_text = "🏷️ Details:\n"
-    for model_key in sorted(n_used_tokens_dict.keys()):
-        n_input_tokens, n_output_tokens = n_used_tokens_dict[model_key]["n_input_tokens"], n_used_tokens_dict[model_key]["n_output_tokens"]
-        total_n_used_tokens += n_input_tokens + n_output_tokens
-
-        n_input_spent_dollars = config.models["info"][model_key]["price_per_1000_input_tokens"] * (n_input_tokens / 1000)
-        n_output_spent_dollars = config.models["info"][model_key]["price_per_1000_output_tokens"] * (n_output_tokens / 1000)
-        total_n_spent_dollars += n_input_spent_dollars + n_output_spent_dollars
-
-        details_text += f"- {model_key}: <b>{n_input_spent_dollars + n_output_spent_dollars:.03f}$</b> / <b>{n_input_tokens + n_output_tokens} tokens</b>\n"
-
-    # image generation
-    image_generation_n_spent_dollars = config.models["info"]["dalle-2"]["price_per_1_image"] * n_generated_images
-    if n_generated_images != 0:
-        details_text += f"- DALL·E 2 (image generation): <b>{image_generation_n_spent_dollars:.03f}$</b> / <b>{n_generated_images} generated images</b>\n"
-
-    total_n_spent_dollars += image_generation_n_spent_dollars
-
-    # voice recognition
-    voice_recognition_n_spent_dollars = config.models["info"]["whisper"]["price_per_1_min"] * (n_transcribed_seconds / 60)
-    if n_transcribed_seconds != 0:
-        details_text += f"- Whisper (voice recognition): <b>{voice_recognition_n_spent_dollars:.03f}$</b> / <b>{n_transcribed_seconds:.01f} seconds</b>\n"
-
-    total_n_spent_dollars += voice_recognition_n_spent_dollars
+    if not is_premium:
+        reply_markup = InlineKeyboardMarkup(SUBSCRIBE_OR_FREE)
+        
+        await update.message.reply_text(text=balance_state, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+    else:
+        reply_markup = None
+        reply_markup = InlineKeyboardMarkup(UNSUBSCRIBE)
+        
+        sub_date = datetime.strptime(premium_till, '%Y-%m-%d %H:%M:%S.%f')
+        sub_date.strftime('%m/%d/%Y %I:%M %p')
+        message = f"<b>Your subscription is valid till {sub_date}</b>"
+        message += f"\n{balance_state}"
+        await update.message.reply_text(message, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
 
 
-    text = f"You spent <b>{total_n_spent_dollars:.03f}$</b>\n"
-    text += f"You used <b>{total_n_used_tokens}</b> tokens\n\n"
-    text += details_text
-
-    await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
 
 async def edited_message_handle(update: Update, context: CallbackContext):

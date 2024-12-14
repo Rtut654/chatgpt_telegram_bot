@@ -1,6 +1,5 @@
 from typing import Optional, Any
 from datetime import datetime, timedelta
-
 import pymongo
 import uuid
 from datetime import datetime
@@ -50,11 +49,12 @@ class Database:
             "current_model": config.models["available_text_models"][0],
 
             "n_used_tokens": {},
-
             "n_generated_images": 0,
             "n_transcribed_seconds": 0.0,  # voice message transcription
-            "is_subscribed": False,
-            "subscription_expire_date": None
+            "is_premium": False,
+            "premium_till": None,
+            "sub_type": None,
+            "daily_messages":0,
         }
 
         if not self.check_if_user_exists(user_id):
@@ -81,7 +81,6 @@ class Database:
             {"_id": user_id},
             {"$set": {"current_dialog_id": dialog_id}}
         )
-
         return dialog_id
 
     def get_user_attribute(self, user_id: int, key: str):
@@ -203,6 +202,7 @@ class Database:
             {"$set": {"status": new_status, "updated_at": datetime.now()}}
 
         )
+
     def update_user_subscription(self, user_id: int, duration_days: int = 30):
         """
         Активирует подписку для пользователя на указанный период.
@@ -216,8 +216,8 @@ class Database:
             {"_id": user_id},
             {
                 "$set": {
-                    "is_subscribed": True,
-                    "subscription_expire_date": subscription_end
+                    "is_premium": True,
+                    "premiumn_till": subscription_end
                 }
             }
         )
