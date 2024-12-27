@@ -32,6 +32,7 @@ from telegram.ext import (
 import config
 import database
 import openai_utils
+from src_bot.bot.handlers import add_handlers
 
 # setup
 db = database.Database()
@@ -987,8 +988,8 @@ async def consider_payment(chat_id, context):
     )
 
 
-def check_premium(user_id):
-    is_premium = db.get_attribute(user_id, 'is_premium')
+async def check_premium(user_id):
+    is_premium = db.get_user_attribute(user_id, 'is_premium')
     if is_premium:
         premium_till = db.get_user_attribute(user_id, 'premium_till')
         premium_till = datetime.strptime(premium_till, '%Y-%m-%d %H:%M:%S.%f')
