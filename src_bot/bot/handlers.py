@@ -1,7 +1,7 @@
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler
 from telegram.ext.filters import BaseFilter
 
-from src_bot.bot.commands.premium.callback_query_handler import (
+from src_bot.bot.commands.premium.callback import (
     callback_query_premium_month_handle,
 )
 from src_bot.bot.commands.premium.handler import premium_handler
@@ -25,7 +25,7 @@ def add_handlers(
             ),
             CallbackQueryHandler(
                 callback=callback_query_premium_month_handle,
-                pattern=f'^{CallbackQueryEnum.PREMIUM_MONTH}',
+                pattern=f'^{CallbackQueryEnum.PREMIUM_TARIFF}',
             ),
         ],
     )

@@ -10,6 +10,7 @@ from telegram.constants import ParseMode
 from telegram.ext import CallbackContext
 
 from src_bot.bot.enums import CallbackQueryEnum
+from src_bot.bot import messages
 
 # TODO: store in MongoDB or .env
 prices_by_month: Dict[str, Dict[str, str]] = {
@@ -17,11 +18,11 @@ prices_by_month: Dict[str, Dict[str, str]] = {
         'yookassa': '100',
         'cryptomus': '100',
     },
-    '3': {
+    '6': {
         'yookassa': '100',
         'cryptomus': '100',
     },
-    '6': {
+    '12': {
         'yookassa': '100',
         'cryptomus': '100',
     },
@@ -29,8 +30,8 @@ prices_by_month: Dict[str, Dict[str, str]] = {
 
 
 async def callback_query_premium_month_handle(
-    update: Update,
-    context: CallbackContext,
+        update: Update,
+        context: CallbackContext,
 ):
     # from bot.bot import register_user_if_not_exists
     #
@@ -41,12 +42,11 @@ async def callback_query_premium_month_handle(
     # )
 
     query: CallbackQuery = update.callback_query
-    [_, month] = query.data.split('|')
+    [_, month_tariff] = query.data.split('|')
 
-    prices: Dict[str, str] = prices_by_month[month]
-
-    # TODO: replace text
-    reply_text: str = 'reply_text'
+    month_tariff = str(month_tariff)
+    prices: Dict[str, str] = prices_by_month[month_tariff]
+    reply_text: str = messages.subscribe_desc_by_tariff[month_tariff]
 
     reply_markup: InlineKeyboardMarkup = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -72,7 +72,7 @@ async def callback_query_premium_month_handle(
     )
 
     await query.answer()
-    await update.message.reply_text(
+    await update.callback_query.message.reply_text(
         text=reply_text,
         parse_mode=ParseMode.HTML,
         reply_markup=reply_markup,

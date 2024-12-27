@@ -14,7 +14,7 @@ class CommandEnum(Enum):
 
 class CallbackQueryEnum(str, Enum):
     PREMIUM_VIEW = 'premium_view'
-    PREMIUM_MONTH = 'premium_month'
+    PREMIUM_TARIFF = 'premium_tariff'
 
     def __str__(self):
         return self.value
