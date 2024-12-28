@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+.idea
 
 # Distribution / packaging
 .Python
@@ -109,7 +110,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-
+payment.env
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -135,3 +136,4 @@ config/config.env
 docker-compose.dev.yml
 
 mongodb/
+poetry.lock
