@@ -10,3 +10,7 @@ subscribe_desc_by_tariff = {
     "6": "<b>✅ Subscription gives you access to 100 daily messages for 6 months.</b>",
     "12": "<b>✅ Subscription gives you access to 100 daily messages for 1 year.</b>"
 }
+
+confirmation_payment_message = """
+Tap the button below to pay! Once you make a payment, you will receive a confirmation message.
+"""

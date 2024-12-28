@@ -3,6 +3,7 @@ from telegram.ext.filters import BaseFilter
 
 from src_bot.bot.commands.premium.callback import (
     callback_query_premium_month_handle,
+    callback_query_payment_choose,
 )
 from src_bot.bot.commands.premium.handler import premium_handler
 from src_bot.bot.enums import CallbackQueryEnum, CommandEnum
@@ -26,6 +27,10 @@ def add_handlers(
             CallbackQueryHandler(
                 callback=callback_query_premium_month_handle,
                 pattern=f'^{CallbackQueryEnum.PREMIUM_TARIFF}',
+            ),
+            CallbackQueryHandler(
+                callback=callback_query_payment_choose,
+                pattern=f'^{CallbackQueryEnum.PAYMENT_CHOOSE}',
             ),
         ],
     )
