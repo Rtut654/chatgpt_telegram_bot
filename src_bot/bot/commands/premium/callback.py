@@ -89,20 +89,4 @@ async def callback_query_payment_choose(
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text='💳 Pay', url=payment_link)]]),
             parse_mode=ParseMode.HTML)
     else:
-        reply_markup = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text='<<',
-                        callback_data=f'{CallbackQueryEnum.PREMIUM_VIEW}',
-                    ),
-                ],
-            ],
-        )
-
         await query.answer()
-        await update.callback_query.message.reply_text(
-            text="nice",
-            parse_mode=ParseMode.HTML,
-            reply_markup=reply_markup,
-        )
