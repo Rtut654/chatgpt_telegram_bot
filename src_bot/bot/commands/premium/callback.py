@@ -47,6 +47,11 @@ async def callback_query_premium_month_handle(
                     text=str(prices["yookassa"]),
                     callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|yookassa')
             ],
+            [
+                InlineKeyboardButton(
+                    text=str(prices["crypto"]),
+                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|crypto')
+            ],
             # [InlineKeyboardButton(f'💎 Crypto - {PRICES[query.data][0]}', callback_data=str(
             #     {"name": query.data, "type": "crypto", "amount": PRICES[query.data][0]}))],
         ],
@@ -97,7 +102,7 @@ async def callback_query_payment_choose(
 
         await query.answer()
         await update.callback_query.message.reply_text(
-            text="",
+            text="nice",
             parse_mode=ParseMode.HTML,
             reply_markup=reply_markup,
         )

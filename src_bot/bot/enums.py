@@ -24,6 +24,7 @@ class CallbackQueryEnum(str, Enum):
 class PaymentType(str, Enum):
     stripe = 'stripe'
     yookassa = 'yookassa'
+    crypto = 'crypto'
 
     def __str__(self):
         return self.value

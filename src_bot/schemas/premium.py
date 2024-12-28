@@ -26,15 +26,18 @@ payment_by_tariff = {
         'stripe': Payment(type="stripe", amount=5.99, nominal="$", desc="🌎 Visa / Mastercard/ Apple/Google Pay",
                           price_id=payment_config.STRIPE_PRICE_1),
         'yookassa': Payment(type="yookassa", amount=600, nominal="RUB", desc="🟢 MIR cards"),
+        'crypto': Payment(type='crypto', amount=5.99, nominal="", desc="💎 Crypto"),
     },
     '6': {
         'stripe': Payment(type="stripe", amount=24.99, nominal="$", desc="🌎 Visa / Mastercard/ Apple/Google Pay",
                           price_id=payment_config.STRIPE_PRICE_1),
         'yookassa': Payment(type="yookassa", amount=2500, nominal="RUB", desc="🟢 MIR cards"),
+        'crypto': Payment(type='crypto', amount=24.99, nominal="", desc="💎 Crypto"),
     },
     '12': {
         'stripe': Payment(type="stripe", amount=44.99, nominal="$", desc="🌎 Visa / Mastercard/ Apple/Google Pay",
                           price_id=payment_config.STRIPE_PRICE_1),
         'yookassa': Payment(type="yookassa", amount=4500, nominal="RUB", desc="🟢 MIR cards"),
+        'crypto': Payment(type='crypto', amount=44.99, nominal="", desc="💎 Crypto"),
     },
 }
