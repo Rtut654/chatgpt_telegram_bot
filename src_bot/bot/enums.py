@@ -15,6 +15,15 @@ class CommandEnum(Enum):
 class CallbackQueryEnum(str, Enum):
     PREMIUM_VIEW = 'premium_view'
     PREMIUM_TARIFF = 'premium_tariff'
+    PAYMENT_CHOOSE = 'PAYMENT_CHOOSE'
+
+    def __str__(self):
+        return self.value
+
+
+class PaymentType(str, Enum):
+    stripe = 'stripe'
+    yookassa = 'yookassa'
 
     def __str__(self):
         return self.value
