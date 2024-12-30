@@ -29,7 +29,7 @@ def run_client():
     app.run(
         host='0.0.0.0',
         port=4433,
-        debug=True,
+        # debug=True,
         # ssl_context=context,
     )
 
