@@ -1,7 +1,7 @@
 import stripe
 
 from src_bot.config.payment_config import payment_config
-from bot.database import get_database
+from src_bot.db.database import get_database
 
 endpoint_secret = "payment_config."
 stripe.api_key = payment_config.STRIPE_API_KEY

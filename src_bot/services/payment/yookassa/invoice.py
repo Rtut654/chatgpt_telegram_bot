@@ -1,6 +1,5 @@
 import json
 import logging
-import asyncio
 import uuid
 
 import yookassa
@@ -8,7 +7,7 @@ import yookassa
 from src_bot.schemas.premium import Payment
 from src_bot.config.payment_config import payment_config
 
-from bot.database import get_database
+from src_bot.db.database import get_database
 
 yookassa.Configuration.account_id = payment_config.YOOKASSA_CLIENT_ID
 yookassa.Configuration.secret_key = payment_config.YOOKASSA_SECRET_KEY

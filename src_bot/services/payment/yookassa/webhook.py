@@ -3,7 +3,7 @@ import logging
 
 import yookassa
 from yookassa.domain.notification import WebhookNotificationEventType, WebhookNotification
-from starlette.responses import Response
+from flask import Response
 
 logger = logging.getLogger(__name__)
 
@@ -48,12 +48,12 @@ def yookassa_webhook_handler(request, db):
         else:
             # Если событие неизвестно или нас не интересует — сообщаем об ошибке
             logger.warning(f"Неизвестный тип события вебхука: {notification_object.event}")
-            return Response(status_code=400)
+            return Response(status=400)
 
         pay_doc = db.payment_collection.find_one({"payment_id": payment_id})
         if not pay_doc:
             logger.error(f"Платеж с ID {payment_id} не найден в базе данных.")
-            return Response(status_code=400)
+            return Response(status=400)
 
         # Обновляем статус платежа в базе данных
         db.update_payment_status(pay_doc["_id"], new_status)
@@ -66,8 +66,8 @@ def yookassa_webhook_handler(request, db):
         else:
             logger.warning(f"Для платежа {payment_id} не указан telegram_id, невозможно активировать подписку.")
 
-        return Response(status_code=200)
+        return Response(status=200)
 
     except Exception as e:
         logger.error(f"Ошибка при обработке уведомления вебхука: {str(e)}")
-        return Response(status_code=400)
+        return Response(status=400)

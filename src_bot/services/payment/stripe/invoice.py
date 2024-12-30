@@ -2,7 +2,7 @@ import stripe
 
 from src_bot.schemas.premium import Payment
 from src_bot.config.payment_config import payment_config
-from bot.database import get_database
+from src_bot.db.database import get_database
 
 stripe.api_key = payment_config.STRIPE_API_KEY
 
@@ -25,7 +25,7 @@ async def create_invoice(client_id: int, payment: Payment):
         amount=payment.amount,
         currency=payment.nominal,
         payment_type="stripe",
-        payment_id=session.invoice.id,
+        payment_id=session.id,
         order_id=None,
         status=session.status,
         additional_data={"uuid": session.id, "url": session.url}
