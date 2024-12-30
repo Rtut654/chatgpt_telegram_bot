@@ -55,6 +55,8 @@ coverage.xml
 # Translations
 *.mo
 *.pot
+cert.pem
+key.pem
 
 # Django stuff:
 *.log
