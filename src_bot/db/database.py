@@ -26,12 +26,12 @@ class Database:
                 return False
 
     def add_new_user(
-        self,
-        user_id: int,
-        chat_id: int,
-        username: str = "",
-        first_name: str = "",
-        last_name: str = "",
+            self,
+            user_id: int,
+            chat_id: int,
+            username: str = "",
+            first_name: str = "",
+            last_name: str = "",
     ):
         user_dict = {
             "_id": user_id,
@@ -54,7 +54,7 @@ class Database:
             "is_premium": False,
             "premium_till": None,
             "sub_type": None,
-            "daily_messages":0,
+            "daily_messages": 0,
         }
 
         if not self.check_if_user_exists(user_id):
@@ -256,3 +256,7 @@ class Database:
     #         {"_id": pay_id},
     #         {"$set": {f"additional_data.{k}": v for k, v in data.items()}, "$currentDate": {"updated_at": True}}
     #     )
+
+
+def get_database():
+    return Database()

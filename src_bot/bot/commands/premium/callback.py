@@ -1,5 +1,3 @@
-import json
-from dataclasses import asdict
 from typing import Dict
 
 from telegram import (
@@ -11,10 +9,12 @@ from telegram import (
 from telegram.constants import ParseMode
 from telegram.ext import CallbackContext
 
-from src_bot.bot.enums import CallbackQueryEnum
+from src_bot.bot.enums import CallbackQueryEnum, PaymentType
 from src_bot.bot import messages
-from src_bot.schemas.premium import Payment, PremiumTariff, payment_by_tariff
-from src_bot.services.payment import stripe, yookassa
+from src_bot.schemas.premium import Payment, payment_by_tariff
+import src_bot.services.payment.stripe.invoice as stripe
+import src_bot.services.payment.yookassa.invoice as yookassa
+import src_bot.services.payment.cryptomus.invoice as cryptomus
 
 
 async def callback_query_premium_month_handle(
@@ -39,21 +39,19 @@ async def callback_query_premium_month_handle(
         [
             [
                 InlineKeyboardButton(
-                    text=str(prices["stripe"]),
-                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|stripe')
+                    text=str(prices[PaymentType.stripe]),
+                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|{PaymentType.stripe}')
             ],
             [
                 InlineKeyboardButton(
-                    text=str(prices["yookassa"]),
-                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|yookassa')
+                    text=str(prices[PaymentType.yookassa]),
+                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|{PaymentType.yookassa}')
             ],
             [
                 InlineKeyboardButton(
-                    text=str(prices["crypto"]),
-                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|crypto')
+                    text=str(prices[PaymentType.cryptomus]),
+                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|{PaymentType.cryptomus}')
             ],
-            # [InlineKeyboardButton(f'💎 Crypto - {PRICES[query.data][0]}', callback_data=str(
-            #     {"name": query.data, "type": "crypto", "amount": PRICES[query.data][0]}))],
         ],
     )
     await query.edit_message_reply_markup(reply_markup=reply_markup)
@@ -68,9 +66,8 @@ async def callback_query_payment_choose(
     [_, month_tariff, payment_type] = query.data.split('|')
     payment = payment_by_tariff[month_tariff][payment_type]
 
-    await context.bot.send_message(chat_id=query.message.chat_id, text=str(payment))
-    if payment.type == "stripe":
-        payment_link = await stripe.process_payment(
+    if payment.type == PaymentType.stripe:
+        payment_link = await stripe.create_invoice(
             client_id=query.from_user.id,
             payment=payment,
         )
@@ -79,8 +76,8 @@ async def callback_query_payment_choose(
             text=messages.confirmation_payment_message,
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text='💳 Pay', url=payment_link)]]),
             parse_mode=ParseMode.HTML)
-    elif payment.type == "yookassa":
-        payment_link = await yookassa.process_payment(
+    elif payment.type == PaymentType.yookassa:
+        payment_link = await yookassa.create_invoice(
             client_id=query.from_user.id,
             payment=payment,
         )
@@ -88,5 +85,14 @@ async def callback_query_payment_choose(
             text=messages.confirmation_payment_message,
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text='💳 Pay', url=payment_link)]]),
             parse_mode=ParseMode.HTML)
-    else:
-        await query.answer()
+    elif payment.type == PaymentType.cryptomus:
+        payment_link = await cryptomus.create_invoice(
+            client_id=query.from_user.id,
+            payment=payment,
+        )
+        # logger = logging.getLogger(__name__)
+        await query.message.reply_text(
+            text=messages.confirmation_payment_message,
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text='💳 Pay', url=payment_link)]]),
+            parse_mode=ParseMode.HTML)
+    await query.answer()

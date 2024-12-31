@@ -7,4 +7,4 @@ python-dotenv==0.21.0
 yookassa==3.4.2
 stripe
 pydantic_settings
-starlette
+flask

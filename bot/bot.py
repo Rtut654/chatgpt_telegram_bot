@@ -30,12 +30,11 @@ from telegram.ext import (
 )
 
 import config
-import database
+from src_bot.db.database import get_database
 import openai_utils
-from src_bot.bot.handlers import add_handlers
 
 # setup
-db = database.Database()
+db = get_database()
 logger = logging.getLogger(__name__)
 
 user_semaphores = {}
