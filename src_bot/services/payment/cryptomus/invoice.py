@@ -2,11 +2,14 @@ import json
 import hashlib
 import base64
 import logging
+import uuid
 
 from typing import Any, Dict
 from aiohttp import ClientSession
 
 from src_bot.config.payment_config import payment_config
+from src_bot.db.database import get_database
+from src_bot.schemas.premium import Payment
 
 logger = logging.getLogger(__name__)
 
@@ -19,42 +22,14 @@ def generate_headers(data: str) -> Dict[str, Any]:
     return {"merchant": MERCHANT_UUID, "sign": sign, "content-type": "application/json"}
 
 
-async def create_invoice(db, user_id: int, amount: int, currency: str, network: str) -> Any:
-    """
-       Создает счет на оплату с помощью API Cryptomus.
-
-       Аргументы:
-           db: Экземпляр класса Database.
-           user_id (int): Идентификатор пользователя.
-           amount (int): Сумма платежа.
-           currency (str): Валюта платежа (например, "USDT").
-           network (str): Сеть для платежа (например, "TRC20").
-
-       Возвращает:
-           Any: Ответ API в формате JSON.
-
-       Пример:
-       async def start(message: Message) -> None:
-            invoice = await create_invoice(message.from_user.id, amount=100, currency="USDT", network="TRC20")
-
-            check_button = InlineKeyboardButton(
-                text="Проверить",
-                callback_data=f"o_{invoice['result']['uuid']}"
-            )
-
-            markup = InlineKeyboardMarkup(inline_keyboard=[[check_button]])
-
-            await message.reply(
-                f"Ваш счет: {invoice['result']['url']}",
-                reply_markup=markup
-            )
-       """
+async def create_invoice(client_id: int, payment: Payment) -> Any:
+    idempotence_key = str(uuid.uuid4())
     async with ClientSession() as session:
         json_dumps = json.dumps({
-            "amount": amount,
-            "order_id": f"TEST-ORDER-{user_id}-000",
-            "currency": currency,
-            "network": network,
+            "amount": str(payment.amount),
+            "order_id": idempotence_key,
+            "currency": payment.currency,
+            "network": None,
             "lifetime": 900,
             "url_callback": payment_config.URL_CALLBACK
         })
@@ -65,19 +40,21 @@ async def create_invoice(db, user_id: int, amount: int, currency: str, network: 
             headers=generate_headers(json_dumps)
         )
         invoice = await response.json()
-
+        logger.warn(invoice)
         if "result" in invoice and "uuid" in invoice["result"]:
+            db = get_database()
             db.add_new_payment(
-                user_id=user_id,
+                user_id=client_id,
                 amount=float(invoice["result"]["amount"]),
                 currency=invoice["result"]["currency"],
                 payment_type="cryptomus",
                 payment_id=invoice['result']['uuid'],
-                order_id=None,
+                order_id=invoice['result']["order_id"],
                 status=invoice["result"].get("status", "pending"),
                 additional_data={"uuid": invoice["result"]["uuid"], "url": invoice["result"]["url"]}
             )
-        return invoice
+            return invoice["result"]["url"]
+        return str(invoice)
 
 
 async def get_invoice(db, uuid: str) -> Any:
