@@ -9,7 +9,7 @@ from telegram import (
 from telegram.constants import ParseMode
 from telegram.ext import CallbackContext
 
-from src_bot.bot.enums import CallbackQueryEnum
+from src_bot.bot.enums import CallbackQueryEnum, PaymentType
 from src_bot.bot import messages
 from src_bot.schemas.premium import Payment, payment_by_tariff
 import src_bot.services.payment.stripe.invoice as stripe
@@ -39,18 +39,18 @@ async def callback_query_premium_month_handle(
         [
             [
                 InlineKeyboardButton(
-                    text=str(prices["stripe"]),
-                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|stripe')
+                    text=str(prices[PaymentType.stripe]),
+                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|{PaymentType.stripe}')
             ],
             [
                 InlineKeyboardButton(
-                    text=str(prices["yookassa"]),
-                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|yookassa')
+                    text=str(prices[PaymentType.yookassa]),
+                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|{PaymentType.yookassa}')
             ],
             [
                 InlineKeyboardButton(
-                    text=str(prices["crypto"]),
-                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|cryptomus')
+                    text=str(prices[PaymentType.cryptomus]),
+                    callback_data=f'{CallbackQueryEnum.PAYMENT_CHOOSE}|{month_tariff}|{PaymentType.cryptomus}')
             ],
         ],
     )
@@ -66,7 +66,7 @@ async def callback_query_payment_choose(
     [_, month_tariff, payment_type] = query.data.split('|')
     payment = payment_by_tariff[month_tariff][payment_type]
 
-    if payment.type == "stripe":
+    if payment.type == PaymentType.stripe:
         payment_link = await stripe.create_invoice(
             client_id=query.from_user.id,
             payment=payment,
@@ -76,7 +76,7 @@ async def callback_query_payment_choose(
             text=messages.confirmation_payment_message,
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text='💳 Pay', url=payment_link)]]),
             parse_mode=ParseMode.HTML)
-    elif payment.type == "yookassa":
+    elif payment.type == PaymentType.yookassa:
         payment_link = await yookassa.create_invoice(
             client_id=query.from_user.id,
             payment=payment,
@@ -85,5 +85,14 @@ async def callback_query_payment_choose(
             text=messages.confirmation_payment_message,
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text='💳 Pay', url=payment_link)]]),
             parse_mode=ParseMode.HTML)
-    elif payment.type == "cryptomus":
-        await query.answer()
+    elif payment.type == PaymentType.cryptomus:
+        payment_link = await cryptomus.create_invoice(
+            client_id=query.from_user.id,
+            payment=payment,
+        )
+        # logger = logging.getLogger(__name__)
+        await query.message.reply_text(
+            text=messages.confirmation_payment_message,
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text='💳 Pay', url=payment_link)]]),
+            parse_mode=ParseMode.HTML)
+    await query.answer()
